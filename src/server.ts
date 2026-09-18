@@ -3,6 +3,9 @@ import { env } from "./config/env";
 import { connectDatabase } from "./config/database";
 
 async function startServer() {
+  console.log("DISPLAY from Node:", process.env.DISPLAY);
+  console.log("PORT from Node:", process.env.PORT);
+
   await connectDatabase(env.mongoUri);
   console.log("Connected to MongoDB");
 
