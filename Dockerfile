@@ -8,6 +8,14 @@ RUN npm install --include=dev
 
 RUN npx playwright install --with-deps chromium
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    xvfb \
+    xauth \
+    fluxbox \
+    x11vnc \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY . .
 
 RUN npm run build
