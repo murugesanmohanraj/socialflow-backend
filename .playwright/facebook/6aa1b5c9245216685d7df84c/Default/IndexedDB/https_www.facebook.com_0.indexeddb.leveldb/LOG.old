@@ -1,0 +1,7 @@
+2026/09/15-16:55:01.426 42a0 Reusing MANIFEST C:\Users\mohan\Downloads\Freelance\SocialFlow\socialflow-backend\.playwright\facebook\6aa1b5c9245216685d7df84c\Default\IndexedDB\https_www.facebook.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/09/15-16:55:01.427 42a0 Recovering log #137
+2026/09/15-16:55:01.430 42a0 Reusing old log C:\Users\mohan\Downloads\Freelance\SocialFlow\socialflow-backend\.playwright\facebook\6aa1b5c9245216685d7df84c\Default\IndexedDB\https_www.facebook.com_0.indexeddb.leveldb/000137.log 
+2026/09/15-16:55:02.547 6c4 Level-0 table #143: started
+2026/09/15-16:55:02.553 6c4 Level-0 table #143: 123930 bytes OK
+2026/09/15-16:55:02.555 6c4 Delete type=0 #137
+2026/09/15-16:55:02.555 1fd4 Manual compaction at level-0 from '\x00A\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00B\x00\x00\x00' @ 0 : 0; will stop at (end)
