@@ -24,4 +24,4 @@ ENV PLAYWRIGHT_BROWSERS_PATH=0
 
 EXPOSE 10000
 
-CMD ["xvfb-run", "-a", "--server-args=-screen 0 1920x1080x24", "node", "dist/server.js"]
+CMD ["bash", "-c", "xvfb-run -a --server-args='-screen 0 1920x1080x24' node dist/server.js"]

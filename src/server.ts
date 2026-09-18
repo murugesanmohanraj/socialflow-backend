@@ -6,9 +6,9 @@ async function startServer() {
   await connectDatabase(env.mongoUri);
   console.log("Connected to MongoDB");
 
-  app.listen(env.port, () => {
+  app.listen(env.port, "0.0.0.0", () => {
     console.log(
-      `Social Media Manager API listening on http://localhost:${env.port}`,
+      `Social Media Manager API listening on http://0.0.0.0:${env.port}`,
     );
   });
 }
