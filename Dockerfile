@@ -24,4 +24,4 @@ ENV PLAYWRIGHT_BROWSERS_PATH=0
 
 EXPOSE 10000
 
-CMD ["bash", "-c", "echo 'Starting SocialFlow...'; echo \"PORT=$PORT\"; echo \"DISPLAY=$DISPLAY\"; which xvfb-run; which xauth; xvfb-run -a --server-args='-screen 0 1920x1080x24' node dist/server.js"]
+CMD ["bash", "-c", "Xvfb :99 -screen 0 1920x1080x24 -ac & export DISPLAY=:99; echo \"DISPLAY=$DISPLAY\"; echo \"PORT=$PORT\"; sleep 2; node dist/server.js"]
