@@ -287,44 +287,60 @@ async function ensureLoggedIn(page: Page, email?: string, password?: string) {
   return true;
 }
 
-async function clickLikeButton(page: Page) {
-  console.log("[Instagram] Starting like action.");
+async function clickLikeButton(
+  page: Page,
+): Promise<"liked" | "already_liked" | false> {
+  console.log("[Instagram] Searching for the Like element.");
 
-  const selectors = [
-    'button[aria-label="Like"]',
-    'button[aria-label*="Like" i]',
-    'button[aria-label="Unlike"]',
-    'button[aria-label*="Unlike" i]',
-    'svg[aria-label="Like"]',
-    'svg[aria-label="Unlike"]',
-    '[aria-label*="Like" i]',
-  ];
-
-  let foundVisibleLike = false;
-  for (const selector of selectors) {
-    const button = page.locator(selector).first();
-    const visible = await button
-      .isVisible({ timeout: 4000 })
-      .catch(() => false);
-    console.log("[Instagram] Like button visible check:", {
-      selector,
-      visible,
+  const likeButton = page
+    .locator('div[data-visualcompletion="ignore-dynamic"] div[role="button"]')
+    .filter({
+      has: page.locator('svg[aria-label="Like"]'),
     });
-    if (visible) {
-      foundVisibleLike = true;
-      console.log("[Instagram] Clicking like control with selector:", selector);
-      await button
-        .click({ force: true, timeout: 10_000 })
-        .catch(() => undefined);
-      await randomDelay(1200, 2200);
-      return true;
+  const unlikeButton = page
+    .locator('div[data-visualcompletion="ignore-dynamic"] div[role="button"]')
+    .filter({
+      has: page.locator('svg[aria-label="Unlike"]'),
+    });
+  const likeElementCount = await likeButton.count();
+  const unLikeElementCount = await unlikeButton.count();
+
+  console.log("[Instagram] Like element counts:", {
+    likeElementCount,
+    unLikeElementCount,
+  });
+
+  if (!likeElementCount) {
+    if (unLikeElementCount) {
+      console.log(
+        "[Instagram] Unlike element found. Instagram post is already liked.",
+      );
+      return "already_liked";
     }
+
+    console.log("[Instagram] Like or Unlike element was not found.");
+    return false;
   }
 
-  console.log("[Instagram] Like control not found or not visible.", {
-    foundVisibleLike,
-  });
-  return false;
+  const firstLikeElement = likeButton.first();
+
+  const visible = await firstLikeElement
+    .isVisible({ timeout: 5000 })
+    .catch(() => false);
+
+  if (!visible) {
+    console.log("[Instagram] Like element is not visible.");
+    return false;
+  }
+
+  try {
+    await firstLikeElement.click({ force: true, timeout: 10_000 });
+    console.log("[Instagram] Like button clicked successfully.");
+    return "liked";
+  } catch (error) {
+    console.log("[Instagram] Like button click failed:", error);
+    return false;
+  }
 }
 
 async function commentOnPost(page: Page, commentText: string) {
@@ -533,11 +549,15 @@ export async function runInstagramAction(
     let postedComment = false;
 
     if (actionType === "like" || actionType === "like_comment") {
-      clickedLike = await clickLikeButton(page);
-      if (!clickedLike) {
+      const likeResult = await clickLikeButton(page);
+      if (!likeResult) {
         throw new Error("Failed to like Instagram post");
       }
-      message = "Instagram post liked successfully";
+      clickedLike = true;
+      message =
+        likeResult === "already_liked"
+          ? "Instagram post was already liked"
+          : "Instagram post liked successfully";
       success = true;
       await randomDelay(1000, 2000);
     }
@@ -569,12 +589,14 @@ export async function runInstagramAction(
   } finally {
     if (workflowCompleted) {
       console.log(
-        "[Instagram] Closing browser after successful workflow completion.",
+        "[Instagram] Workflow completed; closing Chromium after the action.",
       );
-      await context.close().catch(() => undefined);
+      await context.close().catch((error) => {
+        console.log("[Instagram] Chromium close failed:", error);
+      });
     } else {
       console.log(
-        "[Instagram] Workflow incomplete; Chromium remains open for manual inspection.",
+        "[Instagram] Workflow incomplete; keeping Chromium open for manual inspection.",
       );
     }
   }
