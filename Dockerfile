@@ -1,0 +1,19 @@
+FROM node:20-bookworm
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install --include=dev
+
+RUN npx playwright install --with-deps chromium
+
+COPY . .
+
+RUN npm run build
+
+ENV PLAYWRIGHT_BROWSERS_PATH=0
+
+EXPOSE 10000
+
+CMD ["xvfb-run", "-a", "--server-args=-screen 0 1920x1080x24", "node", "dist/server.js"]
