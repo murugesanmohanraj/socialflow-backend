@@ -1,7 +1,0 @@
-node_modules
-dist
-.playwright
-.env
-.git
-.gitignore
-npm-debug.log

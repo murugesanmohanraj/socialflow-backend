@@ -3,15 +3,12 @@ import { env } from "./config/env";
 import { connectDatabase } from "./config/database";
 
 async function startServer() {
-  console.log("DISPLAY from Node:", process.env.DISPLAY);
-  console.log("PORT from Node:", process.env.PORT);
-
   await connectDatabase(env.mongoUri);
   console.log("Connected to MongoDB");
 
-  app.listen(env.port, "0.0.0.0", () => {
+  app.listen(env.port, () => {
     console.log(
-      `Social Media Manager API listening on http://0.0.0.0:${env.port}`,
+      `Social Media Manager API listening on http://localhost:${env.port}`,
     );
   });
 }
