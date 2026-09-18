@@ -21,8 +21,26 @@ import tiktokBrowserRouter from "./routes/tiktokBrowserRoutes";
 
 const app = express();
 
+const allowedOrigins = [
+  env.clientUrl,
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://socialflow-backend-1.onrender.com",
+];
+
 app.use(helmet());
-app.use(cors({ origin: env.clientUrl }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(morgan(env.nodeEnv === "production" ? "combined" : "dev"));
 
