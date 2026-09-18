@@ -1,5 +1,6 @@
 import path from "path";
-import { BrowserContext, Page, chromium } from "playwright";
+import { execSync } from "node:child_process";
+import { Page, chromium } from "playwright";
 import { env } from "../config/env";
 
 function isFacebookUrl(value: string) {
@@ -318,6 +319,27 @@ export async function runFacebookAction(
     userId,
     accountId,
   );
+
+  console.log("=== FACEBOOK PLAYWRIGHT DEBUG ===");
+  console.log("process.cwd():", process.cwd());
+  console.log("userDataDirectory:", userDataDirectory);
+  console.log("DISPLAY:", process.env.DISPLAY);
+  console.log(
+    "PLAYWRIGHT_BROWSERS_PATH:",
+    process.env.PLAYWRIGHT_BROWSERS_PATH,
+  );
+
+  try {
+    const displayInfo = execSync("xdpyinfo -display :99", {
+      encoding: "utf8",
+    });
+
+    console.log("X SERVER IS ACCESSIBLE FROM PLAYWRIGHT");
+    console.log(displayInfo.substring(0, 500));
+  } catch (error) {
+    console.error("X SERVER IS NOT ACCESSIBLE FROM PLAYWRIGHT");
+    console.error(error);
+  }
 
   const context = await chromium.launchPersistentContext(userDataDirectory, {
     headless: false,
