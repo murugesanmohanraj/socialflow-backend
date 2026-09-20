@@ -186,117 +186,99 @@ async function ensureLoggedIn(
 }
 
 async function likeVideo(page: Page): Promise<boolean> {
-  const likeSelectors = [
-    'button[data-e2e="like-icon"]',
-    'button[aria-label*="Like"]',
-    'div[data-e2e="like"] button',
-    'span[data-e2e="like-icon"]',
-    'i[data-e2e="like-icon"]',
-  ];
+  console.log("[TikTok] Looking for the action_like container.");
 
-  for (const selector of likeSelectors) {
-    const likeButton = page.locator(selector).first();
-    if (await likeButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      const isLiked = await likeButton
-        .getAttribute("aria-pressed")
-        .catch(() => "false");
-      if (isLiked === "true") {
-        console.log("Video already liked");
-        return true;
-      }
+  const likeContainer = page
+    .locator('div[data-key-interaction="action_like"]')
+    .first();
+  const likeVisible = await likeContainer
+    .isVisible({ timeout: 15000 })
+    .catch(() => false);
 
-      const box = await likeButton.boundingBox().catch(() => null);
-      if (box) {
-        await humanLikeMouseMove(page, {
-          x: box.x + box.width / 2,
-          y: box.y + box.height / 2,
-        });
-      }
-      await randomDelay(200, 500);
-      await likeButton.click({ force: true });
-      await randomDelay(1000, 2000);
-      console.log("Video liked successfully");
-      return true;
-    }
+  if (!likeVisible) {
+    console.log("[TikTok] action_like element not found.");
+    return false;
   }
 
-  console.log("Like button not found");
-  return false;
+  const firstSpan = likeContainer.locator("span").first();
+  const spanVisible = await firstSpan
+    .isVisible({ timeout: 10000 })
+    .catch(() => false);
+
+  if (!spanVisible) {
+    console.log("[TikTok] action_like span not visible.");
+    return false;
+  }
+
+  try {
+    await firstSpan.click({ force: true, timeout: 10_000 });
+    console.log("[TikTok] action_like first span clicked.");
+    return true;
+  } catch (error) {
+    console.log("[TikTok] action_like click failed:", error);
+    return false;
+  }
 }
 
 async function commentOnVideo(
   page: Page,
   commentText: string,
 ): Promise<boolean> {
-  const commentInputSelectors = [
-    'div[data-e2e="comment-input"]',
-    'div[contenteditable="true"][placeholder*="Comment" i]',
-    'div[contenteditable="true"][placeholder*="Add comment" i]',
-    'div[class*="comment-input"]',
-    'textarea[placeholder*="Comment" i]',
-  ];
+  console.log("[TikTok] Starting comment action with text:", commentText);
 
-  const postButtonSelectors = [
-    'button[data-e2e="comment-post"]',
-    'button:has-text("Post")',
-    'button:has-text("Comment")',
-    'div[role="button"]:has-text("Post")',
-  ];
+  const commentContainer = page
+    .locator('div[data-key-interaction="action_comment"]')
+    .first();
+  const commentVisible = await commentContainer
+    .isVisible({ timeout: 15000 })
+    .catch(() => false);
 
-  let commentInput = null;
-  for (const selector of commentInputSelectors) {
-    const input = page.locator(selector).first();
-    if (await input.isVisible({ timeout: 5000 }).catch(() => false)) {
-      commentInput = input;
-      break;
-    }
-  }
-
-  if (!commentInput) {
-    console.log("Comment input not found");
+  if (!commentVisible) {
+    console.log("[TikTok] action_comment element not found.");
     return false;
   }
 
-  const box = await commentInput.boundingBox().catch(() => null);
-  if (box) {
-    await humanLikeMouseMove(page, {
-      x: box.x + box.width / 2,
-      y: box.y + box.height / 2,
-    });
-  }
-  await randomDelay(300, 800);
+  const firstSpan = commentContainer.locator("span").first();
+  const firstSpanVisible = await firstSpan
+    .isVisible({ timeout: 10000 })
+    .catch(() => false);
 
-  await commentInput.click({ force: true });
-  await randomDelay(300, 800);
-  await commentInput.fill(commentText);
-  await randomDelay(500, 1500);
-
-  let postButton = null;
-  for (const selector of postButtonSelectors) {
-    const button = page.locator(selector).first();
-    if (await button.isVisible({ timeout: 5000 }).catch(() => false)) {
-      postButton = button;
-      break;
-    }
-  }
-
-  if (!postButton) {
-    console.log("Post button not found");
+  if (!firstSpanVisible) {
+    console.log("[TikTok] action_comment first span not visible.");
     return false;
   }
 
-  const postBox = await postButton.boundingBox().catch(() => null);
-  if (postBox) {
-    await humanLikeMouseMove(page, {
-      x: postBox.x + postBox.width / 2,
-      y: postBox.y + postBox.height / 2,
-    });
+  await firstSpan.click({ force: true, timeout: 10_000 });
+  console.log("[TikTok] action_comment first span clicked.");
+
+  await page.waitForTimeout(2000);
+
+  const commentField = page
+    .locator(
+      [
+        'textarea[placeholder*="Add a comment" i]',
+        'textarea[placeholder*="Comment" i]',
+        'div[contenteditable="true"][placeholder*="Comment" i]',
+        'div[contenteditable="true"][placeholder*="Add a comment" i]',
+        'div[role="textbox"][placeholder*="Comment" i]',
+      ].join(","),
+    )
+    .first();
+
+  const fieldVisible = await commentField
+    .isVisible({ timeout: 10000 })
+    .catch(() => false);
+
+  if (!fieldVisible) {
+    console.log("[TikTok] comment field not visible after click.");
+    return false;
   }
-  await randomDelay(300, 800);
-  await postButton.click({ force: true });
+
+  await commentField.click({ force: true });
+  await commentField.fill(commentText, { timeout: 10_000 });
+  await page.keyboard.press("Enter");
   await randomDelay(2000, 4000);
-
-  console.log("Comment posted successfully");
+  console.log("[TikTok] Comment posted via the action_comment flow.");
   return true;
 }
 
@@ -398,20 +380,15 @@ export async function runTikTokAction(
       waitUntil: "domcontentloaded",
       timeout: 60000,
     });
-
+    await page
+      .waitForLoadState("networkidle", { timeout: 30000 })
+      .catch(() => undefined);
     await randomDelay(3000, 6000);
 
     if (await handleCaptchaOrChallenge(page)) {
       console.log("CAPTCHA detected on video page, waiting...");
       await randomDelay(30000, 60000);
     }
-
-    const loggedIn = await ensureLoggedIn(page, email, password);
-    if (!loggedIn) {
-      throw new Error("TikTok login failed. Chromium remains open for review.");
-    }
-
-    await randomDelay(2000, 4000);
 
     let success = false;
     let message = "";
